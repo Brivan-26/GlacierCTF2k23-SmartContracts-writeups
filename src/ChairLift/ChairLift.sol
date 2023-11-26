@@ -38,7 +38,6 @@ contract ChairLift
 
 contract Hack {
     ChairLift target;
-
     constructor(ChairLift _target) {
         target = _target;
     }

@@ -26,7 +26,6 @@ contract Ticket {
 
     //------------------------------------------------ PUBLIC FUNCTIONS ------------------------------------------------//
 
-    // audit-info : SAFE
     function ownerOf(uint256 tokenId) public view returns (address) {
         return _owners[tokenId];
     }
@@ -34,7 +33,6 @@ contract Ticket {
     function approve(address to, uint256 tokenId) public {
         address ticketOwner = ownerOf(tokenId);
         require(to != ticketOwner, "Ticket: approval to current owner");
-        // audit-sus Check 'isApprovedForAll'
         require(msg.sender == ticketOwner || isApprovedForAll(ticketOwner, msg.sender), 
             "Ticket: approve caller is not owner nor approved for all"
         );
@@ -47,7 +45,6 @@ contract Ticket {
         return _tokenApprovals[tokenId];
     }
 
-    // audit-sus Review this
     function setApprovalForAll(address operator, bool approved) public {
         require(operator != msg.sender, "Ticket: approve to caller");
         _operatorApprovals[msg.sender][operator] = approved;
@@ -72,7 +69,6 @@ contract Ticket {
         _safeTransfer(from, to, tokenId, _data);
     }
 
-    // audit-danger VERY SUSPECIOUS
     function transferWithPermit(address from, address to, uint256 tokenId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
         require(block.timestamp <= deadline, "Ticket: permit expired");
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _getDomainSeparator(), keccak256(abi.encode(PERMIT_TYPEHASH, from, to, tokenId, nonces[from]++, deadline))));
