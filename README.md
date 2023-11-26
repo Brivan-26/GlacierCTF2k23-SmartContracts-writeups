@@ -134,6 +134,7 @@ We're making a `delegatecall` to the `implementation` contract which got initial
 2. The values of `msg.value`, `msg.sender` will be in the context of `Guardian`.
 The first point is interesting (*writing to storage will affect the `Guardian` storage, not its storage*).
 > If you don't know how smart contract stores its variable, or you are not familiar with the term `slot`, I invite you to read [this article](https://programtheblockchain.com/posts/2018/03/09/understanding-ethereum-smart-contract-storage/)
+
 The `owner` state is stored in `slot 2`. So, if the `Guardian` contract delegates the call to `GlacierVault` and the last writes to `slot2`, the `owner` state will be updated!<br>
 After inspecting the `GlacierVault`, `quickStore` will write to `storage 2` whatever value we specify as argument if the `index` argument is 0 (because in such situation, the `quickstore1` will be updated, and it is stored in `slot 2`):
 ```solidity
@@ -145,7 +146,7 @@ function quickStore(uint8 index, uint256 value) public payable {
     ...
 }
 ```
-    That's it! Let's make a recap of the attack flow:
+That's it! Let's make a recap of the attack flow:
 1. Deploy a `Hack` contract and initialize it with the target
 2. Calculate the function signature of `quickStore1` passing `0`, `uint256(uint160(msg.sender))` as arguments. (The cast of the address to `uint256` is needed because the function expects uint256 as second argument)
 3. Call the `Guardian` contract with the `msg.data` calculated and send`1337 wei` along.
@@ -176,6 +177,7 @@ contract Hack {
 
 ## 03 - ChairLift
 > Personal pov: This is the most challenge I liked, its idea is nice (because I'm fun of ECC cryptography :V)
+
 **Vulnerability presented in the challenge**: dangerous use of `ecrecover`<br>
 
 The Target contract starts with 1 trip taken. We need to take another trip to solve the challenge:
@@ -196,6 +198,7 @@ function takeRide(uint256 ticketId) external {
 So, the whole challenge is about to get at least one ticket. If we want to play honestly and go with the classical approach, we would call the `buyTicket` function on `ChairLift` contract, but we must either be an owner or pay 1M ether. We need to find another way :).<br>
 There's nothing interesting in `ChainLift`, so the exploit must be in `Ticket` contract, the one that manages the tickets as tokens. The contract looks like ERC20 token with slight modifications and implements `EIP712`
 > The understanding of [EIP712](https://eips.ethereum.org/EIPS/eip-712) is not necessary to solve the challenge, but having knowledge about it will help you to get into the security issue quickly.
+
 After spending some time reading the contract and testing possible attack approaches, two functions were suspicious too much. First is `_tranfser`:
 ```solidity
 function _transfer(address from, address to, uint256 tokenId) internal {
@@ -224,6 +227,7 @@ The function contributes to the implementation of `EIP712`, it provides a way to
 - `bytes32` - The `s` value of the signature.
 
 > Not familiar with digital signatures? r, s, v seems confusing? Highly suggest reading [this](https://github.com/ethereumbook/ethereumbook/blob/develop/06transactions.asciidoc#digital-signatures)
+
 After some research, I found that in case of an invalid signature, it does not revert or return a false boolean, but **it returns the address zero**. <br>
 So, if we call the function passing `from` as `address(0)` and whatever other information, this check `require(signer == from, "Ticket: invalid permit");` will pass and the `_transfer` function will be called passing the following arguments: `_transfer(address(zero), to, tokenId)`. Do you remember? The `_transfer` doesn't check that `from != address(0)`. 
 #### Attack workflow
