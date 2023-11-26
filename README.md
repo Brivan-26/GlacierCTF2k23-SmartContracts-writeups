@@ -13,6 +13,12 @@ forge compile ## Compile smart contracts
 forge test ## Run tests for challenges solution
 forge test -vvv ## Run tests for challenges with tracers enabled
 ```
+
+### Repository Structure
+[src](./src/): Challenges contracts code<br>
+[test](./test/): Challenges solves tests<br>
+[scripts](./scripts/): Challenges solves scripts<br>
+
 ### Challenges 
 
 - [GlacierCoin](#01---glaciercoin)
